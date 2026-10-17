@@ -1,0 +1,55 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+class DemoClient <<Client>> {
+  +main(args: String[]): void
+}
+
+class OrderFacade <<Facade>> {
+  +placeOrder(cart: Cart, customer: Customer): OrderResult
+  +cancelOrder(orderId: String): OrderResult
+}
+
+class InventoryService <<Subsystem>> {
+  +reserve(orderId: String, items: List<CartItem>): void
+  +release(orderId: String): boolean
+  +availableQuantity(productId: String): int
+}
+
+class PaymentProcessor <<Subsystem>> {
+  +charge(orderId: String, token: String, amount: BigDecimal): String
+  +refund(paymentId: String): boolean
+}
+
+class ShippingService <<Subsystem>> {
+  +scheduleDelivery(orderId: String, address: String): String
+  +cancelShipment(shipmentId: String): boolean
+}
+
+class NotificationService <<Subsystem>> {
+  +sendOrderConfirmed(email: String, orderId: String): void
+  +sendOrderCancelled(email: String, orderId: String): void
+  +sendOrderFailed(email: String, orderId: String, reason: String): void
+}
+
+class OrderRepository <<Subsystem>> {
+  +save(order: Order): void
+  +findById(orderId: String): Optional<Order>
+  +updateStatus(orderId: String, status: OrderStatus): void
+}
+
+DemoClient ..> OrderFacade : uses
+OrderFacade o-- InventoryService : coordinates
+OrderFacade o-- PaymentProcessor : coordinates
+OrderFacade o-- ShippingService : coordinates
+OrderFacade o-- NotificationService : coordinates
+OrderFacade o-- OrderRepository : coordinates
+
+note bottom of OrderFacade
+The client sees two high-level methods.
+Subsystem classes remain independent of the Facade.
+end note
+@enduml
+
