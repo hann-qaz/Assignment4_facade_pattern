@@ -108,6 +108,19 @@ class OrderFacadeTest {
     }
 
     @Test
+    void countsRepeatedProductsBeforeReservingStock() {
+        Cart cartWithRepeatedProduct = new Cart(List.of(
+                new CartItem("BOOK", 3, new BigDecimal("5000")),
+                new CartItem("BOOK", 3, new BigDecimal("5000"))
+        ));
+
+        OrderResult result = orderFacade.placeOrder(cartWithRepeatedProduct, validCustomer());
+
+        assertFalse(result.success());
+        assertEquals(5, inventoryService.availableQuantity("BOOK"));
+    }
+
+    @Test
     void cancelsConfirmedOrderAndRestoresResources() {
         OrderResult placedOrder = orderFacade.placeOrder(cart(), validCustomer());
 

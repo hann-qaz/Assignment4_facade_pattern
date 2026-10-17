@@ -5,6 +5,7 @@ import kz.edu.facade.model.CartItem;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class InventoryService {
     private final Map<String, Integer> stock = new HashMap<>();
@@ -22,16 +23,21 @@ public class InventoryService {
             throw new InventoryException("Stock is already reserved for " + orderId);
         }
 
-        for (CartItem item : items) {
-            int available = availableQuantity(item.productId());
-            if (available < item.quantity()) {
-                throw new InventoryException("Not enough stock for " + item.productId());
+        Map<String, Integer> requiredQuantity = items.stream()
+                .collect(Collectors.groupingBy(
+                        CartItem::productId,
+                        Collectors.summingInt(CartItem::quantity)
+                ));
+
+        for (Map.Entry<String, Integer> entry : requiredQuantity.entrySet()) {
+            if (availableQuantity(entry.getKey()) < entry.getValue()) {
+                throw new InventoryException("Not enough stock for " + entry.getKey());
             }
         }
 
-        for (CartItem item : items) {
-            stock.compute(item.productId(), (key, value) -> value - item.quantity());
-        }
+        requiredQuantity.forEach((productId, quantity) ->
+                stock.compute(productId, (key, value) -> value - quantity)
+        );
         reservations.put(orderId, List.copyOf(items));
     }
 
